@@ -55,15 +55,16 @@ n-gpu-layers = $GPU_LAYERS
 threads = $THREADS
 jinja = true
 
-[embed]
-model = $MODELS_DIR/Qwen3-Embedding-4B-Q8_0.gguf
-load-on-startup = true
-ctx-size = 8192
-parallel = 4
-embeddings = true
-pooling = last
-ubatch-size = 8192
-batch-size = 8192
+# [embed] retired for now — Hermes does no vector embeddings. Uncomment to serve gpu/embed.
+# [embed]
+# model = $MODELS_DIR/Qwen3-Embedding-4B-Q8_0.gguf
+# load-on-startup = true
+# ctx-size = 8192
+# parallel = 4
+# embeddings = true
+# pooling = last
+# ubatch-size = 8192
+# batch-size = 8192
 
 [rerank]
 model = $MODELS_DIR/qwen3-reranker-0.6b-q8_0.gguf

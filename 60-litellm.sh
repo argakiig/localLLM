@@ -87,7 +87,7 @@ emit_model() {  # name  backend_model  api_base  [mode]
 echo "  # ---- NPU (Lemonade / FastFlowLM) ----" >> "$CONF"
 for m in "${NPU_IDS[@]}"; do
   case "$m" in
-    *embed*)   name="npu/embed";   mode="embedding" ;;
+    *embed*)   continue ;;                       # embed retired — see 40-npu-lemonade.sh
     *whisper*) name="npu/whisper"; mode="audio_transcription" ;;
     *)         s="${m%-FLM}";      name="npu/${s,,}"; mode="" ;;
   esac
@@ -99,7 +99,7 @@ for id in "${GPU_IDS[@]}"; do
   case "$id" in
     rerank)  continue ;;                      # no clean OpenAI mode for llama.cpp rerank
     default) continue ;;                      # router's implicit empty preset
-    embed)  name="gpu/embed"; mode="embedding" ;;
+    embed)  continue ;;                       # embed retired — see 30-llama-servers.sh
     *)      name="gpu/${id//_/-}"; mode="" ;;
   esac
   emit_model "$name" "$id" "$GPU_BASE" "$mode"
@@ -111,9 +111,6 @@ sd_id="$(curl -fsS --max-time 5 "$SD_BASE/models" 2>/dev/null \
 if [[ -n "$sd_id" ]]; then
   echo "  # ---- Image (stable-diffusion.cpp) ----" >> "$CONF"
   emit_model "image/sd" "$sd_id" "$SD_BASE" "image_generation"
-  # Alias so OpenAI-SDK image clients that hardcode the model name (e.g. Hermes'
-  # openai image_gen plugin via OPENAI_BASE_URL) route to local SD too.
-  emit_model "gpt-image-2" "$sd_id" "$SD_BASE" "image_generation"
 else
   echo "    note: sd-server ($SD_BASE) not running — skipping image/sd (run 50-stable-diffusion.sh)"
 fi

@@ -25,8 +25,8 @@ FLM_VERSION="${FLM_VERSION:-0.9.43}"
 # 60-litellm.sh discovers whatever is downloaded and exposes it as npu/*.
 NPU_MODELS=(
   qwen3-4b-FLM            # aux LLM: summarize / classify / extract (+ tool calling)
-  embed-gemma-300m-FLM    # embeddings (768-dim)
-  whisper-v3-turbo-FLM    # ASR / transcription
+  whisper-v3-turbo-FLM    # ASR / transcription (Hermes STT -> npu/whisper)
+  # embed-gemma-300m-FLM  # retired for now — Hermes does no vector embeddings
   # qwen3-0.6b-FLM        # omitted: FLM emits invalid UTF-8 on short outputs
   #                         (json.exception.type_error.316) — re-add if upstream fixes it
 )
