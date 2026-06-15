@@ -111,6 +111,9 @@ sd_id="$(curl -fsS --max-time 5 "$SD_BASE/models" 2>/dev/null \
 if [[ -n "$sd_id" ]]; then
   echo "  # ---- Image (stable-diffusion.cpp) ----" >> "$CONF"
   emit_model "image/sd" "$sd_id" "$SD_BASE" "image_generation"
+  # Alias so OpenAI-SDK image clients that hardcode the model name (e.g. Hermes'
+  # openai image_gen plugin via OPENAI_BASE_URL) route to local SD too.
+  emit_model "gpt-image-2" "$sd_id" "$SD_BASE" "image_generation"
 else
   echo "    note: sd-server ($SD_BASE) not running — skipping image/sd (run 50-stable-diffusion.sh)"
 fi
