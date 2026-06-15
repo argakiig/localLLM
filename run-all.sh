@@ -8,7 +8,10 @@ STEPS=(
   00-prereq-check.sh
   10-llama-cpp.sh
   20-models.sh
-  30-llama-swap.sh
+  30-llama-servers.sh
+  40-npu-lemonade.sh
+  50-stable-diffusion.sh
+  60-litellm.sh
   99-verify.sh
 )
 

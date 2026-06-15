@@ -1,40 +1,12 @@
-# Models to fetch into $LOCALLLM_MODELS_DIR (default ~/models).
-# Format: <relative-path>  <url>
-# Lines starting with # are ignored. Blank lines OK. Whitespace-separated.
-#
-# For multi-part GGUFs (e.g. 235B), list every part. llama.cpp auto-loads the
-# rest when pointed at part 00001.
-# MTP self-speculation drafter (--spec-type draft-mtp --model-draft <this>)
-
 Qwen3-Embedding-4B-Q8_0.gguf  https://huggingface.co/Qwen/Qwen3-Embedding-4B-GGUF/resolve/main/Qwen3-Embedding-4B-Q8_0.gguf
 
 qwen3-reranker-0.6b-q8_0.gguf  https://huggingface.co/ggml-org/Qwen3-Reranker-0.6B-Q8_0-GGUF/resolve/main/qwen3-reranker-0.6b-q8_0.gguf
-
-gemma-4-12B-it-qat-UD-Q4_K_XL.gguf https://huggingface.co/unsloth/gemma-4-12B-it-qat-GGUF/resolve/main/gemma-4-12B-it-qat-UD-Q4_K_XL.gguf
-mmproj-gemma-4-12b-it-qat-F32.gguf https://huggingface.co/unsloth/gemma-4-12B-it-qat-GGUF/resolve/main/mmproj-F32.gguf
-mtp-gemma-4-12B-it-Q4_0.gguf https://huggingface.co/unsloth/gemma-4-12B-it-qat-GGUF/resolve/main/MTP/gemma-4-12B-it-Q4_0-MTP.gguf
 
 gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf  https://huggingface.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF/resolve/main/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
 mmproj-gemma-4-26b-a4b-qat-BF16.gguf  https://huggingface.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF/resolve/main/mmproj-BF16.gguf
 mtp-gemma-4-26B-A4B-it.gguf  https://huggingface.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF/resolve/main/mtp-gemma-4-26B-A4B-it.gguf
 
-gemma-4-31B-it-qat-UD-Q4_K_XL.gguf https://huggingface.co/unsloth/gemma-4-31B-it-qat-GGUF/resolve/main/gemma-4-31B-it-qat-UD-Q4_K_XL.gguf
-mmproj-gemma-4-31B-it-mmproj-BF16.gguf https://huggingface.co/unsloth/gemma-4-31B-it-qat-GGUF/resolve/main/mmproj-BF16.gguf
-mtp-gemma-4-31B-it.gguf  https://huggingface.co/unsloth/gemma-4-31B-it-qat-GGUF/resolve/main/mtp-gemma-4-31B-it.gguf
-
-# --- Step-3.7-Flash: 198B MoE / 11B active, vision-language, step35 arch (~89 GB) ---
-# Heavy on-demand tier (like the old `heavy`): UD-Q3_K_XL fits the ~113 GB Vulkan UMA
-# budget alongside only the embed+rerank pair. DOWNLOADED BUT NOT YET SERVED — smoke-test
-# that the Vulkan backend actually runs the step35 arch on this APU before adding an
-# INSTANCES row in 30-llama-swap.sh. No MTP drafter in GGUF form (Step's MTP is vLLM/SGLang
-# EAGLE only); use --spec-type ngram-mod if you want free self-speculation. 3 parts —
-# llama.cpp auto-loads parts 2-3 when pointed at 00001.
-Step-3.7-Flash-UD-Q3_K_XL-00001-of-00003.gguf  https://huggingface.co/unsloth/Step-3.7-Flash-GGUF/resolve/main/UD-Q3_K_XL/Step-3.7-Flash-UD-Q3_K_XL-00001-of-00003.gguf
-Step-3.7-Flash-UD-Q3_K_XL-00002-of-00003.gguf  https://huggingface.co/unsloth/Step-3.7-Flash-GGUF/resolve/main/UD-Q3_K_XL/Step-3.7-Flash-UD-Q3_K_XL-00002-of-00003.gguf
-Step-3.7-Flash-UD-Q3_K_XL-00003-of-00003.gguf  https://huggingface.co/unsloth/Step-3.7-Flash-GGUF/resolve/main/UD-Q3_K_XL/Step-3.7-Flash-UD-Q3_K_XL-00003-of-00003.gguf
-
-Step-3.7-Flash-UD-Q2_K_XL-00001-of-00003.gguf https://huggingface.co/unsloth/Step-3.7-Flash-GGUF/resolve/main/UD-Q2_K_XL/Step-3.7-Flash-UD-Q2_K_XL-00001-of-00003.gguf
-Step-3.7-Flash-UD-Q2_K_XL-00002-of-00003.gguf https://huggingface.co/unsloth/Step-3.7-Flash-GGUF/resolve/main/UD-Q2_K_XL/Step-3.7-Flash-UD-Q2_K_XL-00002-of-00003.gguf
-Step-3.7-Flash-UD-Q2_K_XL-00003-of-00003.gguf https://huggingface.co/unsloth/Step-3.7-Flash-GGUF/resolve/main/UD-Q2_K_XL/Step-3.7-Flash-UD-Q2_K_XL-00003-of-00003.gguf
-
-mmproj-Step-3.7-Flash-BF16.gguf  https://huggingface.co/unsloth/Step-3.7-Flash-GGUF/resolve/main/mmproj-BF16.gguf
+# Qwen3.6-35B-A3B MoE — MTP head is embedded in the main GGUF (no separate draft
+# file in this repo), so spec-decode points the draft at the model itself.
+Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf  https://huggingface.co/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/resolve/main/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
+mmproj-qwen3.6-35b-a3b-BF16.gguf  https://huggingface.co/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/resolve/main/mmproj-BF16.gguf

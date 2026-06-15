@@ -37,7 +37,7 @@ built_commit=$(git -C "$SRC" rev-parse --short HEAD)
 
 echo ">>> configuring (Vulkan, Release)"
 # LLAMA_BUILD_UI=OFF: skip llama.cpp's embedded web UI. We front inference with
-# llama-swap + AnythingLLM and never use the built-in server UI, and its build runs
+# a separate router + OpenAI gateway and never use the built-in server UI, and its build runs
 # `npm run build` (vite), which fails on upstream with a missing dev dependency
 # (@vitest/browser-playwright -> ERR_MODULE_NOT_FOUND). Disabling it keeps the build
 # clean; only the /v1 OpenAI API and ops endpoints are used anyway.
