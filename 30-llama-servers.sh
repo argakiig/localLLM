@@ -75,27 +75,11 @@ pooling = rank
 ubatch-size = 8192
 batch-size = 8192
 
-# gemma4 MTP: unsloth ships a SEPARATE tiny draft file.
-[gemma4_26b]
-model = $MODELS_DIR/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
-load-on-startup = true
-ctx-size = 131072
-parallel = 1
-mmproj = $MODELS_DIR/mmproj-gemma-4-26b-a4b-qat-BF16.gguf
-spec-type = draft-mtp
-model-draft = $MODELS_DIR/mtp-gemma-4-26B-A4B-it.gguf
-spec-draft-n-max = 2
-spec-draft-ngl = 999
-temp = 0.6
-top-p = 0.95
-top-k = 64
-min-p = 0.0
-
 # Qwen3.6 MTP is embedded in the main GGUF — draft points at the model itself.
 [qwen36_35b]
 model = $MODELS_DIR/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf
 load-on-startup = true
-ctx-size = 131072
+ctx-size = 262144
 parallel = 1
 mmproj = $MODELS_DIR/mmproj-qwen3.6-35b-a3b-BF16.gguf
 spec-type = draft-mtp

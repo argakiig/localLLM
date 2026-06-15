@@ -51,7 +51,7 @@ mapfile -t GPU_IDS < <(curl -fsS --max-time 5 "$GPU_BASE/models" 2>/dev/null \
   | python3 -c "import sys,json;[print(m['id']) for m in json.load(sys.stdin).get('data',[])]" 2>/dev/null)
 if (( ${#GPU_IDS[@]} == 0 )); then
   echo "    WARN: llama-swap ($GPU_BASE) unreachable — using defaults"
-  GPU_IDS=(embed rerank gemma4_26b qwen36_35b)
+  GPU_IDS=(embed rerank qwen36_35b)
 fi
 
 # ---------------------------------------------------------------------------
@@ -127,7 +127,7 @@ fi
 # NPU aux LLM -> biggest available GPU model, if both ends exist.
 has() { printf '%s\n' "${EMITTED[@]}" | grep -qx "$1"; }
 gpu_fallback=""
-for cand in gpu/qwen36-35b gpu/gemma4-26b gpu/gemma4-31b gpu/gemma4-12b; do
+for cand in gpu/qwen36-35b; do
   if has "$cand"; then gpu_fallback="$cand"; break; fi
 done
 if has "npu/qwen3-4b" && [[ -n "$gpu_fallback" ]]; then

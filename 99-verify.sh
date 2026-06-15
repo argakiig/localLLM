@@ -12,10 +12,10 @@ SWAP="http://$BIND_HOST:$LLAMASWAP_PORT"
 
 # Served set (Resident Core tiny specialists + on-demand MoE fallbacks). All are
 # listed by /v1/models whether or not they're currently loaded.
-EXPECT_MODELS=(embed rerank gemma4_26b gemma4_31b)
+EXPECT_MODELS=(embed rerank qwen36_35b)
 # Model used for the on-demand routing round-trip: a resident-core model that is
 # cheap + fast to load. qwen3_06b is the designated router/fast tier.
-PROBE_MODEL="${LOCALLLM_VERIFY_MODEL:-gemma4_26b}"
+PROBE_MODEL="${LOCALLLM_VERIFY_MODEL:-qwen36_35b}"
 
 fail=0
 ok()  { printf '  \033[32mOK\033[0m    %s\n' "$*"; }
@@ -45,11 +45,11 @@ while IFS=$' \t' read -r rel _url _rest || [[ -n "${rel:-}" ]]; do
 done < models.list
 
 echo
-echo "llama-swap (unified endpoint + router):"
-if systemctl --user is-active --quiet llama-swap.service; then
-  ok "llama-swap.service active"
+echo "llama-router (unified endpoint + router):"
+if systemctl --user is-active --quiet llama-router.service; then
+  ok "llama-router.service active"
 else
-  bad "llama-swap.service not active — journalctl --user -u llama-swap -n 50"
+  bad "llama-router.service not active — journalctl --user -u llama-router -n 50"
 fi
 if loginctl show-user "$USER" -p Linger --value 2>/dev/null | grep -qx yes; then
   ok "lingering enabled (services survive logout)"
@@ -74,7 +74,7 @@ echo "Routing round-trip (loads '$PROBE_MODEL' on demand):"
 gen=$(curl -fsS --max-time 120 "$SWAP/v1/chat/completions" -H 'Content-Type: application/json' \
   -d "{\"model\":\"$PROBE_MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply: ok /no_think\"}],\"max_tokens\":4,\"temperature\":0}" 2>/dev/null || true)
 if echo "$gen" | grep -q '"content"'; then
-  ok "$PROBE_MODEL completion via llama-swap"
+  ok "$PROBE_MODEL completion via llama-server"
   slots=$(curl -fsS --max-time 5 "$SWAP/upstream/$PROBE_MODEL/props" 2>/dev/null \
     | python3 -c 'import sys,json; print(int(json.load(sys.stdin).get("total_slots",0)))' 2>/dev/null || echo 0)
   [[ "${slots:-0}" -ge 2 ]] && ok "$PROBE_MODEL upstream: $slots parallel slots" || info "$PROBE_MODEL upstream slots: ${slots:-?}"

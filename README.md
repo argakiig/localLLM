@@ -23,16 +23,12 @@ llama-swap
   |
   +-- embed
   +-- rerank
-  +-- gemma4_12b
-  +-- gemma4_26b
-  +-- gemma4_31b
-  +-- step37_q2
-  +-- step37_q3
+  +-- qwen36_35b
 ```
 
 `llama-swap` owns model lifecycle. Requests select the model by the OpenAI
 `model` field, and the generated matrix controls which models may stay loaded
-together. The current resident set is `embed`, `rerank`, and `gemma4_26b`.
+together. The current resident set is `embed`, `rerank`, and `qwen36_35b`.
 Larger alternates load on demand with `embed` and `rerank` kept warm.
 
 ## Host Assumptions
@@ -93,10 +89,10 @@ localLLM host. If this host moves to a different address, set
 ./use-model.sh list
 
 # Warm a configured model.
-./use-model.sh load gemma4_26b
+./use-model.sh load qwen36_35b
 
 # Unload one model, or all models.
-./use-model.sh unload gemma4_26b
+./use-model.sh unload qwen36_35b
 ./use-model.sh unload
 ```
 
@@ -106,7 +102,7 @@ Direct OpenAI-compatible request:
 BASE="http://10.0.0.30:${LOCALLLM_LLAMASWAP_PORT:-9090}"
 curl "$BASE/v1/chat/completions" \
   -H 'Content-Type: application/json' \
-  -d '{"model":"gemma4_26b","messages":[{"role":"user","content":"Reply: ok /no_think"}],"max_tokens":8}'
+  -d '{"model":"qwen36_35b","messages":[{"role":"user","content":"Reply: ok /no_think"}],"max_tokens":8}'
 ```
 
 Useful operations:
@@ -114,7 +110,7 @@ Useful operations:
 ```sh
 curl "$BASE/v1/models"
 curl "$BASE/running"
-curl "$BASE/upstream/gemma4_26b/props"
+curl "$BASE/upstream/qwen36_35b/props"
 curl -X POST "$BASE/models/unload"
 ```
 
