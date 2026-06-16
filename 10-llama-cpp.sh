@@ -7,12 +7,8 @@ set -euo pipefail
 cd "$(dirname "$(readlink -f "$0")")"
 
 LLAMA_CPP_REPO="${LLAMA_CPP_REPO:-https://github.com/ggml-org/llama.cpp.git}"
-# 7d2b45b4f (2026-06-08): adds the gemma4-assistant arch — the Gemma-4 MTP draft
-# models (PRs #23398 "add Gemma4 MTP" + #24282 "gemma-4 E2B/E4B assistants"), which
-# `--spec-type draft-mtp` on the gemma4 servers needs. Supersedes 7c158fbb (b9518,
-# 2026-06-04), which first added gemma4uv unified vision+audio mmproj support (still
-# present here) but predates the MTP arch, so its draft load failed with
-# "unknown model architecture: 'gemma4-assistant'".
+# 7d2b45b4f (2026-06-08): known-good router/MTP build for the Qwen3.6 lane.
+# Do not downgrade without re-testing --models-preset and --spec-type draft-mtp.
 LLAMA_CPP_REF="${LLAMA_CPP_REF:-7d2b45b4f}"
 
 SRC="build/llama.cpp"

@@ -8,28 +8,28 @@ state under `build/` wherever possible.
 
 - `llama.cpp` with the Vulkan backend, linked into `build/bin/`.
 - GGUF model files listed in `models.list`.
-- `llama-swap` as one OpenAI-compatible endpoint that routes by model name.
-- Optional `stable-diffusion.cpp` image generation binaries and FLUX.1-schnell
-  model assets.
+- Lemonade Server as the front-door OpenAI-compatible API, serving NPU models via
+  FastFlowLM, `qwen36-35b` through Lemonade's llama.cpp Vulkan backend, and
+  `SD-Turbo` through Lemonade's sd-cpp Vulkan backend.
 
 ## Architecture
 
 ```text
 clients
   |
-  | OpenAI-compatible requests, model = configured name
+  | OpenAI-compatible requests
   v
-llama-swap
+Lemonade :13305/api/v1
   |
-  +-- embed
-  +-- rerank
-  +-- qwen36_35b
+  +-- qwen3-4b-FLM          -> FastFlowLM / XDNA2 NPU
+  +-- whisper-v3-turbo-FLM  -> FastFlowLM / XDNA2 NPU
+  +-- qwen36-35b            -> llama.cpp Vulkan / Radeon iGPU
+  +-- SD-Turbo              -> sd-cpp Vulkan / Radeon iGPU
 ```
 
-`llama-swap` owns model lifecycle. Requests select the model by the OpenAI
-`model` field, and the generated matrix controls which models may stay loaded
-together. The current resident set is `embed`, `rerank`, and `qwen36_35b`.
-Larger alternates load on demand with `embed` and `rerank` kept warm.
+The GPU text model is registered in Lemonade as `qwen36-35b`. Lemonade is the
+router; there is no separate `llama-router`, LiteLLM, Postgres gateway, or
+default standalone image server.
 
 ## Host Assumptions
 
@@ -40,7 +40,7 @@ The text stack expects a Linux host with:
 - Vulkan runtime and readable render device.
 - Mesa 26 or newer for the Vulkan path used by these models.
 - `cmake`, `ninja`, `git`, `curl`, C compiler, `mise`, and Node through `mise`.
-- User systemd available for `llama-swap.service`.
+- Lemonade Server (`lemond.service`) and FastFlowLM.
 
 `00-prereq-check.sh` verifies these assumptions without changing the host.
 
@@ -51,12 +51,13 @@ The text stack expects a Linux host with:
 | 00 | `00-prereq-check.sh` | Read-only host checks for toolchain, Vulkan, render device, and Mesa. |
 | 10 | `10-llama-cpp.sh` | Builds pinned `llama.cpp` with Vulkan and links binaries into `build/bin/`. |
 | 20 | `20-models.sh` | Downloads GGUF files from `models.list` into `$LOCALLLM_MODELS_DIR`. |
-| 30 | `30-llama-swap.sh` | Installs pinned `llama-swap`, writes config, and starts `llama-swap.service`. |
-| 50 | `50-stable-diffusion.sh` | Optional image stack: builds `stable-diffusion.cpp`, fetches FLUX.1-schnell assets, and smoke-tests image generation. |
-| 99 | `99-verify.sh` | Read-only text-stack verification for binaries, models, service, endpoint, and a completion round trip. |
+| 40 | `40-npu-lemonade.sh` | Installs/configures Lemonade, FastFlowLM NPU models, Qwen GPU GGUF, and SD-Turbo through sd-cpp. |
+| 50 | `50-stable-diffusion.sh` | Optional standalone image stack outside Lemonade: builds `stable-diffusion.cpp`, fetches SD-Turbo, and smoke-tests image generation. |
+| 99 | `99-verify.sh` | Read-only verification for binaries, models, Lemonade service, retired services, and a completion round trip. |
 
-`run-all.sh` runs `00`, `10`, `20`, `30`, and `99`. It does not run the optional
-image generation step.
+`run-all.sh` runs the full Lemonade stack and verification. It does not run the
+standalone `50-stable-diffusion.sh` path because Lemonade's `SD-Turbo` backend is
+the default image-generation route.
 
 ## Quick Start
 
@@ -64,7 +65,7 @@ image generation step.
 ./run-all.sh
 ```
 
-To include the optional image generation stack:
+To build the optional standalone image stack:
 
 ```sh
 ./50-stable-diffusion.sh
@@ -76,7 +77,7 @@ To skip image-model downloads while checking the build path:
 SD_FETCH_MODELS=0 SD_SMOKE_TEST=0 ./50-stable-diffusion.sh
 ```
 
-## llama-swap Usage
+## Text Gateway Usage
 
 ### Network Default
 
@@ -85,38 +86,47 @@ localLLM host. If this host moves to a different address, set
 `LOCALLLM_BIND_HOST` before running the service, helpers, or verification.
 
 ```sh
-# List available and currently running models.
+# List available Lemonade models.
 ./use-model.sh list
 
 # Warm a configured model.
-./use-model.sh load qwen36_35b
+./use-model.sh load qwen36-35b
 
-# Unload one model, or all models.
-./use-model.sh unload qwen36_35b
+# Unload one model, or all models from Lemonade.
+./use-model.sh unload qwen36-35b
 ./use-model.sh unload
 ```
 
-Direct OpenAI-compatible request:
+OpenAI-compatible request:
 
 ```sh
-BASE="http://10.0.0.30:${LOCALLLM_LLAMASWAP_PORT:-9090}"
-curl "$BASE/v1/chat/completions" \
+BASE="http://10.0.0.30:${LEMONADE_PORT:-13305}/api/v1"
+curl "$BASE/chat/completions" \
   -H 'Content-Type: application/json' \
-  -d '{"model":"qwen36_35b","messages":[{"role":"user","content":"Reply: ok /no_think"}],"max_tokens":8}'
+  -d '{"model":"qwen36-35b","messages":[{"role":"user","content":"Reply: ok /no_think"}],"max_tokens":8}'
 ```
 
 Useful operations:
 
 ```sh
-curl "$BASE/v1/models"
-curl "$BASE/running"
-curl "$BASE/upstream/qwen36_35b/props"
-curl -X POST "$BASE/models/unload"
+curl "$BASE/models"
+journalctl -u lemond -f
+lemonade list --downloaded
 ```
 
 ## Image Generation Usage
 
-After `50-stable-diffusion.sh` completes:
+Lemonade exposes the image backend as model `SD-Turbo`:
+
+```sh
+BASE="http://10.0.0.30:${LEMONADE_PORT:-13305}/api/v1"
+curl "$BASE/images/generations" \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"SD-Turbo","prompt":"a clean product render of a small brass desk lamp","size":"512x512","n":1}'
+```
+
+The standalone `stable-diffusion.cpp` lane is still available if you want SD-Turbo
+outside Lemonade. After `50-stable-diffusion.sh` completes:
 
 ```sh
 SD_MODELS_DIR="${SD_MODELS_DIR:-$HOME/sdmodels}"
@@ -139,14 +149,19 @@ The smoke-test output is `build/sd-smoke.png`.
 
 | Variable | Default | Used by |
 |----------|---------|---------|
-| `LOCALLLM_MODELS_DIR` | `~/models` | `20-models.sh`, `30-llama-swap.sh`, `99-verify.sh` |
-| `LOCALLLM_BIND_HOST` | `10.0.0.30` for helper and verification URLs; empty service listen unless set | `30-llama-swap.sh`, `use-model.sh`, `99-verify.sh` |
-| `LOCALLLM_THREADS` | `16` | `30-llama-swap.sh` |
-| `LOCALLLM_GPU_LAYERS` | `999` | `30-llama-swap.sh` |
-| `LOCALLLM_LLAMASWAP_PORT` | `9090` | `30-llama-swap.sh`, `use-model.sh`, `99-verify.sh` |
+| `LOCALLLM_MODELS_DIR` | `~/models` | `20-models.sh`, `40-npu-lemonade.sh`, `99-verify.sh` |
+| `LOCALLLM_BIND_HOST` | `10.0.0.30` | `40-npu-lemonade.sh`, `use-model.sh`, `99-verify.sh` |
+| `LEMONADE_PORT` | `13305` | `40-npu-lemonade.sh`, `use-model.sh`, `99-verify.sh` |
+| `LEMONADE_GPU_MODEL_ID` | `qwen36-35b` | `40-npu-lemonade.sh` |
+| `LEMONADE_GPU_CHECKPOINT` | Qwen3.6 GGUF Hugging Face checkpoint | `40-npu-lemonade.sh` |
+| `LEMONADE_IMAGE_MODEL_ID` | `SD-Turbo` | `40-npu-lemonade.sh` |
+| `LEMONADE_IMAGE_SIZE` | `512` | `40-npu-lemonade.sh` |
+| `LEMONADE_IMAGE_STEPS` | `4` | `40-npu-lemonade.sh` |
+| `LEMONADE_IMAGE_CFG` | `1.0` | `40-npu-lemonade.sh` |
+| `LEMONADE_GPU_CTX_SIZE` | `262144` | `40-npu-lemonade.sh` |
+| `LEMONADE_LLAMACPP_ARGS` | Qwen tuned Vulkan args | `40-npu-lemonade.sh` |
 | `LLAMA_CPP_REPO` | repository URL configured in the script | `10-llama-cpp.sh` |
 | `LLAMA_CPP_REF` | pinned commit in `10-llama-cpp.sh` | `10-llama-cpp.sh` |
-| `LLAMA_SWAP_VERSION` | `v217` | `30-llama-swap.sh` |
 | `SD_CPP_REPO` | repository URL configured in the script | `50-stable-diffusion.sh` |
 | `SD_CPP_REF` | pinned commit in `50-stable-diffusion.sh` | `50-stable-diffusion.sh` |
 | `SD_MODELS_DIR` | `~/sdmodels` | `50-stable-diffusion.sh` |
@@ -157,13 +172,12 @@ The smoke-test output is `build/sd-smoke.png`.
 
 1. Add the GGUF file to `models.list`.
 2. Run `./20-models.sh`.
-3. Add an entry to `INSTANCES` in `30-llama-swap.sh`.
-4. Add the model to the matrix set that matches its memory behavior.
-5. Run `./30-llama-swap.sh`.
-6. Run `LOCALLLM_VERIFY_MODEL=<name> ./99-verify.sh`.
+3. Register it in `40-npu-lemonade.sh` with `lemonade pull <name> --recipe llamacpp`.
+4. Run `./40-npu-lemonade.sh`.
+5. Run `LOCALLLM_VERIFY_MODEL=<name> ./99-verify.sh`.
 
 ## Generated State
 
 `build/` contains generated source checkouts, compiled binaries, linked binaries,
-downloaded helper binaries, and marker files. Remove `build/` and rerun the
-numbered scripts to rebuild generated artifacts from scratch.
+downloaded helper binaries, and marker files. Lemonade model registrations and
+backend state are managed by Lemonade Server.

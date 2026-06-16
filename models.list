@@ -1,11 +1,3 @@
-Qwen3-Embedding-4B-Q8_0.gguf  https://huggingface.co/Qwen/Qwen3-Embedding-4B-GGUF/resolve/main/Qwen3-Embedding-4B-Q8_0.gguf
-
-qwen3-reranker-0.6b-q8_0.gguf  https://huggingface.co/ggml-org/Qwen3-Reranker-0.6B-Q8_0-GGUF/resolve/main/qwen3-reranker-0.6b-q8_0.gguf
-
-gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf  https://huggingface.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF/resolve/main/gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf
-mmproj-gemma-4-26b-a4b-qat-BF16.gguf  https://huggingface.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF/resolve/main/mmproj-BF16.gguf
-mtp-gemma-4-26B-A4B-it.gguf  https://huggingface.co/unsloth/gemma-4-26B-A4B-it-qat-GGUF/resolve/main/mtp-gemma-4-26B-A4B-it.gguf
-
 # Qwen3.6-35B-A3B MoE — MTP head is embedded in the main GGUF (no separate draft
 # file in this repo), so spec-decode points the draft at the model itself.
 Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf  https://huggingface.co/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/resolve/main/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf

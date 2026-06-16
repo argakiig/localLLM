@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # 50-stable-diffusion.sh — build stable-diffusion.cpp (Vulkan) + fetch SD-Turbo
-# and run sd-server as a service so image generation is routable through LiteLLM
-# (60-litellm.sh exposes it as image/sd and gpt-image-2). Mirrors 10-llama-cpp.sh
+# and run sd-server as a local OpenAI image API service. Mirrors 10-llama-cpp.sh
 # (pinned commit, Vulkan/Release, binaries linked into build/bin). Idempotent.
 #
 # Produces:  build/bin/sd-cli, build/bin/sd-server   (Vulkan-accelerated)
@@ -123,8 +122,7 @@ if [[ "$SMOKE_TEST" == "1" && "$FETCH_MODELS" == "1" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-# 5) Run sd-server as a systemd --user service so LiteLLM (60-litellm.sh) can
-#    route to it. Serves the OpenAI image API at
+# 5) Run sd-server as a systemd --user service. Serves the OpenAI image API at
 #    http://$SD_BIND_HOST:$SD_PORT/v1/images/generations.
 #    NOTE: this holds the model resident (~6 GB UMA). `systemctl --user stop
 #    sd-server` to free it when you're not generating images.
@@ -167,4 +165,4 @@ echo "  Logs       journalctl --user -u sd-server -f"
 echo "  Generate   build/bin/sd-cli -m $MODEL \\"
 echo "               --cfg-scale $SD_CFG --sampling-method euler_a --steps $SD_STEPS \\"
 echo "               -W $SD_SIZE -H $SD_SIZE -p 'your prompt' -o asset.png"
-echo "  Gateway    60-litellm.sh exposes this as image/sd + gpt-image-2 through LiteLLM :4000"
+echo "  Endpoint   http://$SD_BIND_HOST:$SD_PORT/v1"
