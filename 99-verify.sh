@@ -10,7 +10,7 @@ MODELS_DIR="${LOCALLLM_MODELS_DIR:-$HOME/models}"
 LEMONADE_PORT="${LEMONADE_PORT:-13305}"
 LEMONADE_BASE="http://$BIND_HOST:$LEMONADE_PORT/api/v1"
 PROBE_MODEL="${LOCALLLM_VERIFY_MODEL:-qwen36-35b}"
-EXPECT_MODELS=(qwen3-4b-FLM whisper-v3-turbo-FLM qwen36-35b SD-Turbo)
+EXPECT_MODELS=(qwen3.5-4b-FLM whisper-v3-turbo-FLM qwen36-35b SD-Turbo)
 
 fail=0
 ok()  { printf '  \033[32mOK\033[0m    %s\n' "$*"; }

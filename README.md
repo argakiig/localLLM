@@ -21,7 +21,7 @@ clients
   v
 Lemonade :13305/api/v1
   |
-  +-- qwen3-4b-FLM          -> FastFlowLM / XDNA2 NPU
+  +-- qwen3.5-4b-FLM          -> FastFlowLM / XDNA2 NPU
   +-- whisper-v3-turbo-FLM  -> FastFlowLM / XDNA2 NPU
   +-- qwen36-35b            -> llama.cpp Vulkan / Radeon iGPU
   +-- SD-Turbo              -> sd-cpp Vulkan / Radeon iGPU

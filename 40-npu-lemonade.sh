@@ -33,7 +33,7 @@ IMAGE_CFG="${LEMONADE_IMAGE_CFG:-1.0}"
 
 # NPU models served via FastFlowLM.
 NPU_MODELS=(
-  qwen3-4b-FLM            # aux LLM: summarize / classify / extract (+ tool calling)
+  qwen3.5-4b-FLM            # aux LLM: summarize / classify / extract (+ tool calling)
   whisper-v3-turbo-FLM    # ASR / transcription (Hermes STT -> npu/whisper)
   # qwen3-0.6b-FLM        # omitted: FLM emits invalid UTF-8 on short outputs
   #                         (json.exception.type_error.316) — re-add if upstream fixes it
